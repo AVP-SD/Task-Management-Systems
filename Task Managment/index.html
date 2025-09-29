@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leader-line@1.0.7/leader-line.min.js"></script>
+    <style>
+        .flowchart-container {
+            position: relative;
+            height: 600px;
+            overflow: hidden;
+        }
+        .flow-node {
+            position: absolute;
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            min-width: 120px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .flow-node:hover {
+            transform: scale(1.05);
+        }
+        .flow-node.start { background: #10b981; }
+        .flow-node.end { background: #ef4444; }
+        .flow-node.decision { background: #f59e0b; }
+        .flow-node.action { background: #3b82f6; }
+        .flow-connection {
+            position: absolute;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">Task Manager</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900">Home</a>
+                    <a href="pipelines.html" class="text-gray-600 hover:text-gray-900">Pipelines</a>
+                    <a href="tasks.html" class="text-gray-600 hover:text-gray-900">My Tasks</a>
+                    <a href="admin.html" class="text-gray-600 hover:text-gray-900">Admin</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Task Management System</h1>
+            <p class="text-xl text-gray-600">A multi-user task management system with pipeline support</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Get Started</h2>
+                <p class="text-gray-600 mb-6">Choose a pipeline to start managing your tasks</p>
+                <a href="pipelines.html" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 inline-block">
+                    View Pipelines
+                </a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Features</h2>
+                <ul class="text-gray-600 space-y-2">
+                    <li>• Interactive pipeline visualization</li>
+                    <li>• Task submission and tracking</li>
+                    <li>• User and admin dashboards</li>
+                    <li>• Role-based access control</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation handling
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Task Management System loaded');
+        });
+    </script>
+</body>
+</html>

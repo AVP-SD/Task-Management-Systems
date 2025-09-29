@@ -1,0 +1,17 @@
+{
+  "name": "task-management-system",
+  "version": "1.0.0",
+  "description": "Static HTML Task Management System with API",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "node api/server.js",
+    "build": "echo 'Static site - no build required'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": ["task-management", "static-site", "api"],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Review Pipeline - Task Management System</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        .flowchart-container {
+            position: relative;
+            height: 600px;
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .flow-node {
+            position: absolute;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            min-width: 140px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flow-node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .flow-node.start { background: #10b981; }
+        .flow-node.end { background: #ef4444; }
+        .flow-node.decision { background: #f59e0b; }
+        .flow-node.action { background: #3b82f6; }
+        .flow-connection {
+            position: absolute;
+            pointer-events: none;
+        }
+        .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+        .arrow-right {
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #64748b;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-xl font-bold text-gray-900">Task Manager</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900">Home</a>
+                    <a href="pipelines.html" class="text-gray-600 hover:text-gray-900">Pipelines</a>
+                    <a href="tasks.html" class="text-gray-600 hover:text-gray-900">My Tasks</a>
+                    <a href="admin.html" class="text-gray-600 hover:text-gray-900">Admin</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900" id="pipeline-title">Content Review Pipeline</h1>
+                    <p class="text-gray-600 mt-2" id="pipeline-description">Pipeline for reviewing content submissions</p>
+                </div>
+                <a href="pipelines.html"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Back to Pipelines
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Flowchart -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Pipeline Flow</h2>
+                    <div id="flowchart-container" class="flowchart-container"></div>
+                </div>
+            </div>
+
+            <!-- Task Submission -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Submit Task</h2>
+                    <form id="task-form">
+                        <div class="mb-4">
+                            <label for="task-link" class="block text-sm font-medium text-gray-700 mb-2">
+                                Task Link
+                            </label>
+                            <input type="url" id="task-link" name="task-link" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="https://example.com/task">
+                        </div>
+                        <div class="mb-4">
+                            <label for="user-id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Your Name/ID
+                            </label>
+                            <input type="text" id="user-id" name="user-id" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Enter your name or ID">
+                        </div>
+                        <button type="submit"
+                                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            Submit Task
+                        </button>
+                    </form>
+                    <div id="submit-message" class="mt-4 text-sm text-center hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pipeline data
+        const pipelines = {
+            'content-review-pipeline': {
+                name: 'Content Review Pipeline',
+                description: 'Pipeline for reviewing content submissions',
+                nodes: [
+                    { id: 'start', type: 'start', label: 'Start Review Process', x: 400, y: 50 },
+                    { id: 'check-format', type: 'decision', label: 'Is content format correct?', x: 400, y: 150 },
+                    { id: 'format-ok', type: 'action', label: 'Format is correct', x: 200, y: 250 },
+                    { id: 'format-issues', type: 'action', label: 'Fix format issues', x: 600, y: 250 },
+                    { id: 'check-quality', type: 'decision', label: 'Does content meet quality standards?', x: 200, y: 350 },
+                    { id: 'quality-ok', type: 'action', label: 'Quality is acceptable', x: 50, y: 450 },
+                    { id: 'needs-improvement', type: 'action', label: 'Request improvements', x: 350, y: 450 },
+                    { id: 'approve', type: 'action', label: 'Approve content', x: 50, y: 550 }
+                ],
+                connections: [
+                    { from: 'start', to: 'check-format' },
+                    { from: 'check-format', to: 'format-ok' },
+                    { from: 'check-format', to: 'format-issues' },
+                    { from: 'format-ok', to: 'check-quality' },
+                    { from: 'format-issues', to: 'check-format' },
+                    { from: 'check-quality', to: 'quality-ok' },
+                    { from: 'check-quality', to: 'needs-improvement' },
+                    { from: 'quality-ok', to: 'approve' },
+                    { from: 'needs-improvement', to: 'check-format' }
+                ]
+            },
+            'bug-report-pipeline': {
+                name: 'Bug Report Pipeline',
+                description: 'Pipeline for handling bug reports',
+                nodes: [
+                    { id: 'start', type: 'start', label: 'Bug Report Received', x: 400, y: 50 },
+                    { id: 'validate-report', type: 'decision', label: 'Is the bug report complete?', x: 400, y: 150 },
+                    { id: 'complete', type: 'action', label: 'Report is complete', x: 200, y: 250 },
+                    { id: 'incomplete', type: 'action', label: 'Request more information', x: 600, y: 250 },
+                    { id: 'reproduce-bug', type: 'decision', label: 'Can you reproduce the bug?', x: 200, y: 350 },
+                    { id: 'reproducible', type: 'action', label: 'Bug is reproducible', x: 50, y: 450 },
+                    { id: 'not-reproducible', type: 'action', label: 'Cannot reproduce - Request more info', x: 350, y: 450 },
+                    { id: 'assign-priority', type: 'decision', label: 'Set bug priority', x: 50, y: 550 },
+                    { id: 'critical', type: 'action', label: 'Critical - Fix immediately', x: 50, y: 650 },
+                    { id: 'high', type: 'action', label: 'High - Fix in next release', x: 350, y: 650 }
+                ],
+                connections: [
+                    { from: 'start', to: 'validate-report' },
+                    { from: 'validate-report', to: 'complete' },
+                    { from: 'validate-report', to: 'incomplete' },
+                    { from: 'complete', to: 'reproduce-bug' },
+                    { from: 'incomplete', to: 'validate-report' },
+                    { from: 'reproduce-bug', to: 'reproducible' },
+                    { from: 'reproduce-bug', to: 'not-reproducible' },
+                    { from: 'reproducible', to: 'assign-priority' },
+                    { from: 'not-reproducible', to: 'validate-report' },
+                    { from: 'assign-priority', to: 'critical' },
+                    { from: 'assign-priority', to: 'high' }
+                ]
+            }
+        };
+
+        // Get pipeline ID from URL
+        function getPipelineId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id') || 'content-review-pipeline';
+        }
+
+        // Create flowchart
+        function createFlowchart() {
+            const container = document.getElementById('flowchart-container');
+            const pipelineId = getPipelineId();
+            const pipeline = pipelines[pipelineId];
+
+            if (!pipeline) {
+                container.innerHTML = '<p class="text-red-600">Pipeline not found</p>';
+                return;
+            }
+
+            // Update page title and description
+            document.getElementById('pipeline-title').textContent = pipeline.name;
+            document.getElementById('pipeline-description').textContent = pipeline.description;
+
+            // Clear container
+            container.innerHTML = '';
+
+            // Create nodes
+            pipeline.nodes.forEach(node => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = `flow-node ${node.type}`;
+                nodeElement.id = `node-${node.id}`;
+                nodeElement.textContent = node.label;
+                nodeElement.style.left = `${node.x}px`;
+                nodeElement.style.top = `${node.y}px`;
+                container.appendChild(nodeElement);
+            });
+
+            // Create connections (simple arrows for now)
+            pipeline.connections.forEach((conn, index) => {
+                setTimeout(() => {
+                    const fromNode = document.getElementById(`node-${conn.from}`);
+                    const toNode = document.getElementById(`node-${conn.to}`);
+
+                    if (fromNode && toNode) {
+                        const fromRect = fromNode.getBoundingClientRect();
+                        const toRect = toNode.getBoundingClientRect();
+                        const containerRect = container.getBoundingClientRect();
+
+                        const fromX = fromRect.left - containerRect.left + fromRect.width / 2;
+                        const fromY = fromRect.top - containerRect.top + fromRect.height / 2;
+                        const toX = toRect.left - containerRect.left + toRect.width / 2;
+                        const toY = toRect.top - containerRect.top + toRect.height / 2;
+
+                        // Create arrow
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow arrow-right';
+                        arrow.style.left = `${toX - 5}px`;
+                        arrow.style.top = `${toY - 8}px`;
+                        container.appendChild(arrow);
+
+                        // Create connection line
+                        const line = document.createElement('div');
+                        line.className = 'flow-connection';
+                        line.style.left = `${Math.min(fromX, toX)}px`;
+                        line.style.top = `${Math.min(fromY, toY)}px`;
+                        line.style.width = `${Math.abs(toX - fromX)}px`;
+                        line.style.height = `${Math.abs(toY - fromY)}px`;
+                        line.style.border = '2px solid #64748b';
+                        line.style.borderWidth = fromY === toY ? '0 0 2px 2px' : '2px 2px 0 0';
+                        container.appendChild(line);
+                    }
+                }, index * 100);
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('task-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const taskLink = document.getElementById('task-link').value;
+            const userId = document.getElementById('user-id').value;
+            const messageDiv = document.getElementById('submit-message');
+
+            // Simple API call simulation
+            fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    pipelineId: getPipelineId(),
+                    link: taskLink,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                messageDiv.textContent = 'Task submitted successfully!';
+                messageDiv.className = 'mt-4 text-sm text-center text-green-600';
+                messageDiv.classList.remove('hidden');
+                document.getElementById('task-form').reset();
+                setTimeout(() => {
+                    messageDiv.classList.add('hidden');
+                }, 3000);
+            })
+            .catch(error => {
+                messageDiv.textContent = 'Failed to submit task. Please try again.';
+                messageDiv.className = 'mt-4 text-sm text-center text-red-600';
+                messageDiv.classList.remove('hidden');
+                console.error('Error:', error);
+            });
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', createFlowchart);
+    </script>
+</body>
+</html>

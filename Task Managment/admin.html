@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Task Management System</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        .tab-active { background: #4f46e5; color: white; }
+        .tab-inactive { background: white; color: #374151; border: 1px solid #d1d5db; }
+        .tab-inactive:hover { background: #f9fafb; }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-in_progress { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-xl font-bold text-gray-900">Task Manager</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900">Home</a>
+                    <a href="pipelines.html" class="text-gray-600 hover:text-gray-900">Pipelines</a>
+                    <a href="tasks.html" class="text-gray-600 hover:text-gray-900">My Tasks</a>
+                    <a href="admin.html" class="text-indigo-600 font-medium">Admin</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="text-gray-600 mt-2">Manage users, pipelines, and tasks</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8">
+                    <button onclick="showTab('tasks')"
+                            class="tab-active py-2 px-1 border-b-2 font-medium text-sm">
+                        Tasks (<span id="task-count">0</span>)
+                    </button>
+                    <button onclick="showTab('users')"
+                            class="tab-inactive py-2 px-1 border-b-2 font-medium text-sm">
+                        Users (<span id="user-count">0</span>)
+                    </button>
+                    <button onclick="showTab('pipelines')"
+                            class="tab-inactive py-2 px-1 border-b-2 font-medium text-sm">
+                        Pipelines (<span id="pipeline-count">0</span>)
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks-tab" class="space-y-6">
+            <!-- Filter Buttons -->
+            <div class="flex space-x-4">
+                <button onclick="filterAdminTasks('all')"
+                        class="px-4 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white">
+                    All Tasks
+                </button>
+                <button onclick="filterAdminTasks('pending')"
+                        class="px-4 py-2 rounded-md text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
+                    Pending
+                </button>
+                <button onclick="filterAdminTasks('completed')"
+                        class="px-4 py-2 rounded-md text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
+                    Completed
+                </button>
+            </div>
+
+            <!-- Tasks Table -->
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div id="admin-tasks-container">
+                    <!-- Tasks will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="hidden space-y-6">
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div id="users-container">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipelines Tab -->
+        <div id="pipelines-tab" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pipelines-container">
+                <!-- Pipelines will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allAdminTasks = [];
+        let allUsers = [];
+        let allPipelines = [];
+
+        // Sample data
+        const adminTasks = [
+            {
+                id: '1',
+                userId: 'user1',
+                userEmail: 'john@example.com',
+                pipelineId: 'content-review-pipeline',
+                pipelineName: 'Content Review Pipeline',
+                link: 'https://example.com/content1',
+                status: 'pending',
+                quality: null,
+                createdAt: '2024-01-15T10:30:00Z'
+            },
+            {
+                id: '2',
+                userId: 'user2',
+                userEmail: 'jane@example.com',
+                pipelineId: 'bug-report-pipeline',
+                pipelineName: 'Bug Report Pipeline',
+                link: 'https://example.com/bug1',
+                status: 'completed',
+                quality: 8,
+                createdAt: '2024-01-14T14:20:00Z'
+            },
+            {
+                id: '3',
+                userId: 'user1',
+                userEmail: 'john@example.com',
+                pipelineId: 'content-review-pipeline',
+                pipelineName: 'Content Review Pipeline',
+                link: 'https://example.com/content2',
+                status: 'in_progress',
+                quality: null,
+                createdAt: '2024-01-13T09:15:00Z'
+            }
+        ];
+
+        const users = [
+            { uid: 'user1', email: 'john@example.com', role: 'user', createdAt: '2024-01-01T00:00:00Z' },
+            { uid: 'user2', email: 'jane@example.com', role: 'user', createdAt: '2024-01-02T00:00:00Z' },
+            { uid: 'admin1', email: 'admin@example.com', role: 'admin', createdAt: '2024-01-01T00:00:00Z' }
+        ];
+
+        const pipelinesData = [
+            { id: 'content-review-pipeline', name: 'Content Review Pipeline', description: 'Pipeline for reviewing content submissions', updatedAt: '2024-01-01T00:00:00Z' },
+            { id: 'bug-report-pipeline', name: 'Bug Report Pipeline', description: 'Pipeline for handling bug reports', updatedAt: '2024-01-01T00:00:00Z' }
+        ];
+
+        function showTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.textContent.includes('Tasks') || btn.textContent.includes('Users') || btn.textContent.includes('Pipelines')) {
+                    btn.className = 'tab-inactive py-2 px-1 border-b-2 font-medium text-sm';
+                }
+            });
+            event.target.className = 'tab-active py-2 px-1 border-b-2 font-medium text-sm';
+
+            // Show/hide tab content
+            document.getElementById('tasks-tab').classList.add('hidden');
+            document.getElementById('users-tab').classList.add('hidden');
+            document.getElementById('pipelines-tab').classList.add('hidden');
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+
+            // Load tab data
+            loadTabData(tabName);
+        }
+
+        function loadTabData(tabName) {
+            switch(tabName) {
+                case 'tasks':
+                    allAdminTasks = adminTasks;
+                    document.getElementById('task-count').textContent = adminTasks.length;
+                    renderAdminTasks('all');
+                    break;
+                case 'users':
+                    allUsers = users;
+                    document.getElementById('user-count').textContent = users.length;
+                    renderUsers();
+                    break;
+                case 'pipelines':
+                    allPipelines = pipelinesData;
+                    document.getElementById('pipeline-count').textContent = pipelinesData.length;
+                    renderPipelines();
+                    break;
+            }
+        }
+
+        function filterAdminTasks(status) {
+            renderAdminTasks(status);
+        }
+
+        function renderAdminTasks(statusFilter) {
+            const container = document.getElementById('admin-tasks-container');
+            let filteredTasks = allAdminTasks;
+
+            if (statusFilter !== 'all') {
+                filteredTasks = allAdminTasks.filter(task => task.status === statusFilter);
+            }
+
+            container.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pipeline</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${filteredTasks.map(task => `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="${task.link}" target="_blank" class="text-indigo-600 hover:text-indigo-900">
+                                            View Task
+                                        </a>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${task.userEmail}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${task.pipelineName}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="status-badge status-${task.status}">
+                                        ${task.status.replace('_', ' ')}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${task.quality !== null ? `${task.quality}/10` : 'Not rated'}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${new Date(task.createdAt).toLocaleDateString()}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderUsers() {
+            const container = document.getElementById('users-container');
+            container.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${allUsers.map(user => `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">${user.email}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                        user.role === 'admin'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                    }">
+                                        ${user.role}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${new Date(user.createdAt).toLocaleDateString()}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${allAdminTasks.filter(t => t.userId === user.uid).length}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderPipelines() {
+            const container = document.getElementById('pipelines-container');
+            container.innerHTML = allPipelines.map(pipeline => `
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">${pipeline.name}</h3>
+                    <p class="text-gray-600 text-sm mb-4">${pipeline.description}</p>
+                    <div class="text-sm text-gray-500">
+                        <p>Updated: ${new Date(pipeline.updatedAt).toLocaleDateString()}</p>
+                        <p class="mt-1">Tasks: ${allAdminTasks.filter(t => t.pipelineId === pipeline.id).length}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTabData('tasks');
+        });
+    </script>
+</body>
+</html>
